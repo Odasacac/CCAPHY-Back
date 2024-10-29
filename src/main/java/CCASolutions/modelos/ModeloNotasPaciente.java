@@ -1,5 +1,6 @@
 package CCASolutions.modelos;
 
+import java.io.Serializable;
 import java.util.Date;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -13,8 +14,11 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name="notas")
-public class ModeloNotasPaciente 
+public class ModeloNotasPaciente implements Serializable
 {
+
+	private static final long serialVersionUID = 3866825263503845200L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;

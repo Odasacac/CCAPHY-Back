@@ -1,8 +1,10 @@
 package CCASolutions.modelos;
 
-import java.util.Date;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
+import CCASolutions.enums.EnumEspecialidades;
 import CCASolutions.enums.EnumRoles;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -18,8 +20,11 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name="empleados")
-public class ModeloEmpleados 
+public class ModeloEmpleados implements Serializable
 {
+
+	private static final long serialVersionUID = 7556690529710051236L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -27,7 +32,7 @@ public class ModeloEmpleados
 	private String nombre;
 	private String primerApellido;
 	private String segundoApellido;
-	private String codigoUsuario;
+	private String codigoEmpleado;
 	private String correo;
 	
 	private Long responsableId;
@@ -35,16 +40,23 @@ public class ModeloEmpleados
 	@Enumerated(EnumType.STRING)
 	private EnumRoles rol;
 	
-	private String especialidad;
+	@Enumerated(EnumType.STRING)
+	private EnumEspecialidades especialidad;
 	
 	private String contrasenyaEncriptada;
-	private Date fechaCreacion;
+	private LocalDateTime fechaCreacion;
 	
     @OneToMany(mappedBy = "responsable", cascade = CascadeType.ALL)
     private List<ModeloPacientes> pacientes;
     
     @OneToMany(mappedBy = "responsable", cascade = CascadeType.ALL)
     private List<ModeloNotasPaciente> notas;
+    
+    @OneToMany(mappedBy = "emisor")
+    private List<ModeloMensajes> mensajesEnviados;
+
+    @OneToMany(mappedBy = "receptor")
+    private List<ModeloMensajes> mensajesRecibidos;
 	
     
 

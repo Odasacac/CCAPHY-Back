@@ -1,5 +1,6 @@
 package CCASolutions.modelos;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
@@ -20,8 +21,11 @@ import lombok.Data;
 @Data
 @Entity
 @Table(name="pacientes")
-public class ModeloPacientes 
+public class ModeloPacientes implements Serializable
 {
+
+	private static final long serialVersionUID = -1353053810652553612L;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
