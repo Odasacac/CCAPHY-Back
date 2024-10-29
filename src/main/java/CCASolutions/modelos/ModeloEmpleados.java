@@ -43,7 +43,7 @@ public class ModeloEmpleados implements Serializable
 	@Enumerated(EnumType.STRING)
 	private EnumEspecialidades especialidad;
 	
-	private String contrasenyaEncriptada;
+	private String contrasenya;
 	private LocalDateTime fechaCreacion;
 	
     @OneToMany(mappedBy = "responsable", cascade = CascadeType.ALL)

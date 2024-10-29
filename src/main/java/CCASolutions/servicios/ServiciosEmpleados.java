@@ -36,7 +36,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
 			
 			String nombreCorreoCodigo = empleado.getNombre().toUpperCase();
-			String contrasenyaLogin = empleado.getContrasenyaEncriptada();
+			String contrasenyaLogin = empleado.getContrasenya();
 			
 			boolean existeCorreo = false;
 			boolean existeCodigo = false;
@@ -60,21 +60,16 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			
 			if (existeCorreo || existeCodigo)
 			{
-				
-				System.out.println("Entramos en el if de los dos booleanos");
 				String contrasenyaBD = "";
 				
 				if (existeCorreo)
 				{
-					System.out.println("Entramos en el if del correo");
 					contrasenyaBD = empleadosDao.getContrasenyaDeEmpleadoPorCorreo(nombreCorreoCodigo);
 				}
 				else if (existeCodigo)
 				{
-					System.out.println("Entramos en el if del codigo");
 					contrasenyaBD = empleadosDao.getContrasenyaDeEmpleadoPorCodigo(nombreCorreoCodigo);
 				}
-				System.out.println("Contraseña en BD: " + contrasenyaBD);
 				
 				if (contrasenyaBD.equals(contrasenyaLogin))
 				{
@@ -142,7 +137,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		empleado.setSegundoApellido(capitalizer(empleado.getSegundoApellido()));
 		empleado.setCodigoEmpleado(generateCode(empleado));
 		empleado.setCorreo(generateCorreo(empleado));
-		empleado.setContrasenyaEncriptada(encriptarContrasenya(empleado.getContrasenyaEncriptada()));
+		empleado.setContrasenya(encriptarContrasenya(empleado.getContrasenya()));
 		empleado.setFechaCreacion(LocalDateTime.now());
 		
 		try

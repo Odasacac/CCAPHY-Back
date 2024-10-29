@@ -16,10 +16,10 @@ public interface IEmpleadosDao extends CrudRepository<ModeloEmpleados, Long>
 	@Query("SELECT e.correo FROM ModeloEmpleados e")
     List<String> findAllCorreos();
 	
-	@Query("SELECT e.contrasenyaEncriptada FROM ModeloEmpleados e WHERE e.correo = :correo")
+	@Query("SELECT e.contrasenya FROM ModeloEmpleados e WHERE e.correo = :correo")
 	String getContrasenyaDeEmpleadoPorCorreo (@Param ("correo") String correo);
 	
-	@Query("SELECT e.contrasenyaEncriptada FROM ModeloEmpleados e WHERE e.codigoEmpleado = :codigo")
+	@Query("SELECT e.contrasenya FROM ModeloEmpleados e WHERE e.codigoEmpleado = :codigo")
 	String getContrasenyaDeEmpleadoPorCodigo (@Param ("codigo") String codigo);
 	
 	@Query ("SELECT e FROM ModeloEmpleados e Where e.correo = :correo")
