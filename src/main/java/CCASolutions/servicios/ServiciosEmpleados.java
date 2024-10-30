@@ -1,10 +1,15 @@
 package CCASolutions.servicios;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import javax.crypto.SecretKey;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -15,6 +20,9 @@ import CCASolutions.modelos.ModeloEmpleadoLogueado;
 import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.respuestas.RespuestaEmpleadoLogueado;
 import CCASolutions.respuestas.RespuestaEmpleados;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 
 @Service
 public class ServiciosEmpleados implements IServiciosEmpleados
@@ -22,8 +30,8 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	@Autowired
 	private IEmpleadosDao empleadosDao;
 
-	
-	
+	@Value("${jwt.secret-key}")
+	private String secretKey;
 	
 	@Override
 	@Transactional
@@ -86,17 +94,23 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			
 					 ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
 		             empleadoParaFront.setNombre(empleadoLogueado.getNombre());
-		             empleadoParaFront.setCodigoEmpleado(empleadoLogueado.getCodigoEmpleado());
+		             empleadoParaFront.setEmpleadoId(empleadoLogueado.getId());
 		             empleadoParaFront.setRol(empleadoLogueado.getRol());
 		                
 					respuesta.setRespuesta("Login correcto.");
 					respuesta.setEmpleadoLogueado(empleadoParaFront);
+					
+					//Generamos el JWT
+					String jwt = generateJWT(empleadoLogueado);
+					
+					respuesta.setJwt(jwt);
 					
 				}
 				else
 				{
 					respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
 					respuesta.setEmpleadoLogueado(null);
+					respuesta.setJwt(null);
 					return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);	
 				}
 				
@@ -106,6 +120,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			{	
 				respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
 				respuesta.setEmpleadoLogueado(null);
+				respuesta.setJwt(null);
 				return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);		
 			}
 			
@@ -113,8 +128,9 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		}
 		catch (Exception e)
 		{
-			respuesta.setRespuesta("Error al hacer login: " + e);
+			respuesta.setRespuesta("Error al hacer login.");
 			respuesta.setEmpleadoLogueado(null);
+			respuesta.setJwt(null);
 			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 
@@ -186,6 +202,26 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 	
 	//METODOS APARTE
+	
+	
+	private String generateJWT(ModeloEmpleados empleado)
+	{
+		Date now = new Date();
+		Date expiryDate = new Date(now.getTime() + 86400000);
+		
+		SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+
+		String token = Jwts.builder()
+        	.setSubject(empleado.getCodigoEmpleado())
+        	.claim("role", empleado.getRol()) 
+        	.setIssuedAt(now)
+        	.setExpiration(expiryDate) 
+        	.signWith(key, SignatureAlgorithm.HS256)
+        	.compact();
+
+			return token;
+	}
+	
 	
 
 	

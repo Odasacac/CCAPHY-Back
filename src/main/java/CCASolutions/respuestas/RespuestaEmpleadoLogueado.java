@@ -8,4 +8,5 @@ public class RespuestaEmpleadoLogueado
 {
 	private ModeloEmpleadoLogueado empleadoLogueado;
 	private String respuesta;
+	private String jwt;
 }

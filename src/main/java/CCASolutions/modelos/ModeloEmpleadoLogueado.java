@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class ModeloEmpleadoLogueado 
 {
+	private Long empleadoId;
 	private String nombre;
-	private String codigoEmpleado;
 	private EnumRoles rol;
 }
