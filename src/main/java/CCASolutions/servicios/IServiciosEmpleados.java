@@ -10,4 +10,5 @@ public interface IServiciosEmpleados
 {
 	public ResponseEntity<RespuestaEmpleados> guardarNuevoEmpleado (ModeloEmpleados empleado);
 	public ResponseEntity<RespuestaEmpleadoLogueado> hacerLogin (ModeloEmpleados empleado);
+	public ResponseEntity<RespuestaEmpleados> restablecerContrasenya (ModeloEmpleados empleado);
 }

@@ -34,6 +34,66 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	@Value("${jwt.secret-key}")
 	private String secretKey;
 	
+	
+	
+	
+	
+	
+
+	@Override
+	@Transactional
+	public ResponseEntity<RespuestaEmpleados> restablecerContrasenya(ModeloEmpleados empleadoSolicitaContrasenya) 
+	{
+		
+		RespuestaEmpleados respuesta = new RespuestaEmpleados();
+		
+		try
+		{
+  			ModeloEmpleados empleadoEncontrado = empleadosDao.getEmpleadoPorCodigo(empleadoSolicitaContrasenya.getCodigoEmpleado());
+  			
+  			if (empleadoEncontrado != null)
+  			{
+  				empleadoEncontrado.setContrasenya(encriptarContrasenya(empleadoSolicitaContrasenya.getContrasenya()));
+  				ModeloEmpleados empleadoActualizado = empleadosDao.save(empleadoEncontrado);
+  				
+  				if (empleadoActualizado != null)
+				{
+					respuesta.setRespuesta("Contraseña actualizada");
+					respuesta.setEmpleados(null);
+					
+					// Aqui podria implementarse enviar al correo un mensaje al correo diciendo que se ha restablecido la contraseña
+				}
+				else
+				{
+					respuesta.setRespuesta("Error al actualizar.");
+					respuesta.setEmpleados(null);
+					return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+				}
+  				
+  				
+  			}
+  			else
+  			{
+  				respuesta.setRespuesta("Error al buscar el empleado.");
+  				respuesta.setEmpleados(null);
+  				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.NOT_FOUND);
+  			}
+
+		
+		}
+		catch (Exception e)
+		{
+			respuesta.setRespuesta("Error al restablecer la contraseña: " + e);
+			respuesta.setEmpleados(null);
+			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return new ResponseEntity<RespuestaEmpleados> (respuesta, HttpStatus.OK);
+
+	}
+	
+	
+	
 	@Override
 	@Transactional
 	public ResponseEntity<RespuestaEmpleadoLogueado> hacerLogin (ModeloEmpleados empleado)
@@ -242,8 +302,11 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 	private boolean comprobarEmpleadoExistePorNombreCompleto(ModeloEmpleados empleado)
 	{
-		Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
 		boolean empleadoExiste = false;
+		try
+		{
+		Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
+		
 		
 		for (ModeloEmpleados empleadoExistente : allEmpleados)
 		{
@@ -252,6 +315,11 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			        empleadoExiste = true;
 			        break; //
 			}
+		}
+		}
+		catch (Exception e)
+		{
+			System.out.println ("Error: " + e);
 		}
 		
 		return empleadoExiste;
@@ -391,4 +459,10 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			 return codigoGeneradoAleatoriamente.toString();
 		 }
 		 }
+
+
+
+
+
+
 }
