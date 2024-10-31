@@ -23,8 +23,8 @@ public interface IEmpleadosDao extends CrudRepository<ModeloEmpleados, Long>
 	String getContrasenyaDeEmpleadoPorCodigo (@Param ("codigo") String codigo);
 	
 	@Query ("SELECT e FROM ModeloEmpleados e Where e.correo = :correo")
-	ModeloEmpleados getEmpleadoLogueadoPorCorreo (@Param ("correo") String correo);
+	ModeloEmpleados getEmpleadoPorCorreo (@Param ("correo") String correo);
 	
 	@Query ("SELECT e FROM ModeloEmpleados e Where e.codigoEmpleado = :codigo")
-	ModeloEmpleados getEmpleadoLogueadoPorCodigo (@Param ("codigo") String codigo);
+	ModeloEmpleados getEmpleadoPorCodigo (@Param ("codigo") String codigo);
 }

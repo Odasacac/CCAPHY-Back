@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,17 +80,20 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 					contrasenyaBD = empleadosDao.getContrasenyaDeEmpleadoPorCodigo(nombreCorreoCodigo);
 				}
 				
-				if (contrasenyaBD.equals(contrasenyaLogin))
+				
+				
+				
+				if (verificarContrasenya(contrasenyaLogin, contrasenyaBD))
 				{
 					ModeloEmpleados empleadoLogueado = new ModeloEmpleados();
 					
 					if (existeCorreo)
 					{
-						empleadoLogueado = empleadosDao.getEmpleadoLogueadoPorCorreo(nombreCorreoCodigo);
+						empleadoLogueado = empleadosDao.getEmpleadoPorCorreo(nombreCorreoCodigo);
 					}
 					else if (existeCodigo)
 					{
-						empleadoLogueado = empleadosDao.getEmpleadoLogueadoPorCodigo(nombreCorreoCodigo);
+						empleadoLogueado = empleadosDao.getEmpleadoPorCodigo(nombreCorreoCodigo);
 					}
 			
 					 ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
@@ -158,7 +162,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		
 		try
 		{		
-			if (comprobarEmpleadoExiste(empleado))
+			if (comprobarEmpleadoExistePorNombreCompleto(empleado))
 			{
 				respuesta.setRespuesta("Empleado ya existente.");
 				respuesta.setEmpleados(null);
@@ -204,6 +208,17 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	//METODOS APARTE
 	
 	
+	
+	private boolean verificarContrasenya (String contrasenyaIngresada, String hashAlmacenado)
+	{
+		
+		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+		return encoder.matches(contrasenyaIngresada, hashAlmacenado);
+
+	}
+	
+	
 	private String generateJWT(ModeloEmpleados empleado)
 	{
 		Date now = new Date();
@@ -225,7 +240,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 
 	
-	private boolean comprobarEmpleadoExiste(ModeloEmpleados empleado)
+	private boolean comprobarEmpleadoExistePorNombreCompleto(ModeloEmpleados empleado)
 	{
 		Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
 		boolean empleadoExiste = false;
@@ -292,8 +307,11 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 	private static String encriptarContrasenya (String contrasenya)
 	{
-		//Esta por implementar
-		return contrasenya;
+		
+		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
+
+		return encoder.encode(contrasenya);
+
 	}
 	
 	
