@@ -2,7 +2,7 @@ package CCASolutions.others;
 
 import CCASolutions.modelos.ModeloEmpleados;
 
-public interface IFuncionesUtiles 
+public interface IFuncionesUtiles
 {
 	public String encriptarContrasenya (String contrasenya);
 	

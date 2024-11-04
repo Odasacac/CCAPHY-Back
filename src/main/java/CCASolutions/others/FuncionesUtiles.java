@@ -10,6 +10,7 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import CCASolutions.dao.IEmpleadosDao;
 import CCASolutions.modelos.ModeloEmpleados;
@@ -17,7 +18,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 
-public class FuncionesUtiles 
+@Service
+public class FuncionesUtiles implements IFuncionesUtiles
 {
 	@Autowired
 	private IEmpleadosDao empleadosDao;
