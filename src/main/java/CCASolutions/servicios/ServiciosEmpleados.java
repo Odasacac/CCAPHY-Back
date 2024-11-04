@@ -2,6 +2,7 @@ package CCASolutions.servicios;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import CCASolutions.dao.IEmpleadosDao;
 import CCASolutions.modelos.ModeloEmpleadoLogueado;
 import CCASolutions.modelos.ModeloEmpleados;
+import CCASolutions.modelos.ModeloMensajes;
 import CCASolutions.respuestas.RespuestaEmpleadoLogueado;
 import CCASolutions.respuestas.RespuestaEmpleados;
 import io.jsonwebtoken.Jwts;
@@ -30,6 +32,9 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 {
 	@Autowired
 	private IEmpleadosDao empleadosDao;
+
+	@Autowired
+	private IServiciosMensajes serviciosMensajes;
 
 	@Value("${jwt.secret-key}")
 	private String secretKey;
@@ -56,7 +61,30 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 					respuesta.setRespuesta("Contraseña actualizada");
 					respuesta.setEmpleados(null);
 					
-					// Aqui podria implementarse enviar al correo un mensaje al correo diciendo que se ha restablecido la contraseña
+					ModeloMensajes mensajeSignUp = new ModeloMensajes();
+					mensajeSignUp.setAsunto("Cambio de contraseña");
+					
+					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'a las' HH:mm:ss");
+					String fechaHoraFormateada = LocalDateTime.now().format(formatter);
+					
+					String contenido = "Hola, " + empleadoActualizado.getNombre()
+									+ "\n\nLe informamos que su contraseña ha sido actualizada el día "
+									+ fechaHoraFormateada + "."
+									+ "\n\nPara cualquier duda puede escribir a este correo."
+									+ "\n\nGracias.";
+								
+					
+					mensajeSignUp.setContenido(contenido);
+					
+					ModeloEmpleados emisorMensaje = new ModeloEmpleados();
+					
+					emisorMensaje.setId(1L);
+					
+					mensajeSignUp.setEmisor(emisorMensaje);
+					
+					mensajeSignUp.setReceptor(empleadoActualizado);
+					
+					serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
 				}
 				else
 				{
@@ -153,10 +181,6 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	        {
 	        	respuesta.setRespuesta("Contraseña caducada.");
 	        	
-	        	System.out.println("Fecha actual: " + LocalDateTime.now());
-	        	System.out.println("Fecha hace un mes: " + haceUnMes);
-	        	System.out.println("Ultima modificacion: " + fechaExpir);
-	        	
 	            respuesta.setEmpleadoLogueado(null);
     			respuesta.setJwt(null);
     			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
@@ -219,7 +243,28 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 					respuesta.setRespuesta(empleadoGuardado.getCorreo());
 					respuesta.setEmpleados(null);
 					
-					// Aqui podria implementarse enviar al correo un mensaje al correo dando la bienvenida
+					ModeloMensajes mensajeSignUp = new ModeloMensajes();
+					mensajeSignUp.setAsunto("Bienvenid@ a CCAPHY, " + empleadoGuardado.getNombre());
+					
+					String contenido = "Le damos la bienvenida a CCAPHY,"
+									+ "\n\nSu dirección de correo electrónico es: " + empleadoGuardado.getCorreo()
+									+ "\nSu código de empleado es: " + empleadoGuardado.getCodigoEmpleado()
+									+ "\n\nPara cualquier duda puede escribir a este correo."
+									+ "\n\nGracias.";
+								
+					
+					mensajeSignUp.setContenido(contenido);
+					
+					ModeloEmpleados emisorMensaje = new ModeloEmpleados();
+					
+					emisorMensaje.setId(1L);
+					
+					mensajeSignUp.setEmisor(emisorMensaje);
+					
+					mensajeSignUp.setReceptor(empleadoGuardado);
+					
+					serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
+					
 				}
 				else
 				{
@@ -282,30 +327,29 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 
 	
-	private boolean comprobarEmpleadoExistePorNombreCompleto(ModeloEmpleados empleado)
+	private boolean comprobarEmpleadoExistePorNombreCompleto(ModeloEmpleados empleado) 
 	{
-		boolean empleadoExiste = false;
-		try
-		{
-			Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
-		
-		
-			for (ModeloEmpleados empleadoExistente : allEmpleados)
-			{
-				if (empleadoExistente.getNombre().equals(empleado.getNombre()) && empleadoExistente.getPrimerApellido().equals(empleado.getPrimerApellido())&& empleadoExistente.getSegundoApellido().equals(empleado.getSegundoApellido())) 
-				{		        
-			        empleadoExiste = true;
-			        break; //
-				}
-			}
-		}
-		catch (Exception e)
-		{
-			System.out.println ("Error: " + e);
-		}
-		
-		return empleadoExiste;
+	    boolean empleadoExiste = false;
+
+	    try 
+	    {
+
+	        if (empleado.getNombre() == null || empleado.getPrimerApellido() == null || empleado.getSegundoApellido() == null) 
+	        {
+	            return false;
+	        }
+
+
+	        empleadoExiste = empleadosDao.existsByNombreAndPrimerApellidoAndSegundoApellido(empleado.getNombre(), empleado.getPrimerApellido(), empleado.getSegundoApellido());
+	    } 
+	    catch (Exception e) 
+	    {
+	        System.out.println("Error: " + e);
+	    }
+
+	    return empleadoExiste;
 	}
+
 
 	
 	
@@ -434,7 +478,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		     {
 		    	 int indiceAleatorio = random.nextInt(caracteres.length()); 
 		    	 char caracterAleatorio = caracteres.charAt(indiceAleatorio);
-		    	 codigoGeneradoAleatoriamente.append(caracterAleatorio); // Agregar el carácter al código
+		    	 codigoGeneradoAleatoriamente.append(caracterAleatorio);
 		     }
 	
 			 	

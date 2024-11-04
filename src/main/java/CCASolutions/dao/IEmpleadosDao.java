@@ -27,4 +27,6 @@ public interface IEmpleadosDao extends CrudRepository<ModeloEmpleados, Long>
 	
 	@Query ("SELECT e FROM ModeloEmpleados e Where e.codigoEmpleado = :codigo")
 	ModeloEmpleados getEmpleadoPorCodigo (@Param ("codigo") String codigo);
+	
+	 boolean existsByNombreAndPrimerApellidoAndSegundoApellido(String nombre, String primerApellido, String segundoApellido);
 }

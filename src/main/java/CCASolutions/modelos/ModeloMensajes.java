@@ -23,10 +23,10 @@ public class ModeloMensajes implements Serializable
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
+	
 	private String asunto;
 	private String contenido;
 	private LocalDateTime fechaEnvio;
-	private LocalDateTime fechaApertura;
 	
 	@ManyToOne
     @JoinColumn(name = "emisor_id", referencedColumnName = "id")
@@ -37,5 +37,7 @@ public class ModeloMensajes implements Serializable
     private ModeloEmpleados receptor;
 	
 	private boolean estaEnPapelera;
+	private boolean estaEliminado;
+	private LocalDateTime fechaEliminacion;
 
 }
