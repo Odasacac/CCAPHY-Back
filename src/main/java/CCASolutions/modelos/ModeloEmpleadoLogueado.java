@@ -9,4 +9,5 @@ public class ModeloEmpleadoLogueado
 	private Long empleadoId;
 	private String nombre;
 	private EnumRoles rol;
+	private String codigoEmpleado;
 }

@@ -35,10 +35,16 @@ public class ControladorEmpleados
 		return serviciosEmpleados.hacerLogin(empleado);
 	}
 	
-	@PutMapping ("/empleados/restablecer")
-	public ResponseEntity<RespuestaEmpleados> restablecerContrasenya (@RequestBody ModeloEmpleados empleado)
+	@PutMapping ("/empleados/restableceradm")
+	public ResponseEntity<RespuestaEmpleados> restablecerContrasenyaPorAdmin (@RequestBody ModeloEmpleados empleado)
 	{
 		return serviciosEmpleados.restablecerContrasenya(empleado);
+	}
+	
+	@PutMapping ("/empleados/restableceremp")
+	public ResponseEntity<RespuestaEmpleados> restablecerContrasenyaPorEmple (@RequestBody ModeloEmpleados empleado)
+	{
+		return serviciosEmpleados.restablecerContrasenyaPorEmpleado(empleado);
 	}
 	
 }

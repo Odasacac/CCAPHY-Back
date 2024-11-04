@@ -36,24 +36,19 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 	
 	
-	
-	
-	
-
 	@Override
 	@Transactional
-	public ResponseEntity<RespuestaEmpleados> restablecerContrasenya(ModeloEmpleados empleadoSolicitaContrasenya) 
+	public ResponseEntity<RespuestaEmpleados> restablecerContrasenya(ModeloEmpleados empleadoSolicitaContrasenya)
 	{
-		
 		RespuestaEmpleados respuesta = new RespuestaEmpleados();
-		
 		try
 		{
-  			ModeloEmpleados empleadoEncontrado = empleadosDao.getEmpleadoPorCodigo(empleadoSolicitaContrasenya.getCodigoEmpleado());
-  			
-  			if (empleadoEncontrado != null)
+			ModeloEmpleados empleadoEncontrado = empleadosDao.getEmpleadoPorCodigo(empleadoSolicitaContrasenya.getCodigoEmpleado());
+			
+			if (empleadoEncontrado != null)
   			{
-  				empleadoEncontrado.setContrasenya(encriptarContrasenya(empleadoSolicitaContrasenya.getContrasenya()));
+  				empleadoEncontrado.setContrasenya(empleadoSolicitaContrasenya.getContrasenya());
+  				empleadoEncontrado.setUltimaModificacionContrasenya(LocalDateTime.now());
   				ModeloEmpleados empleadoActualizado = empleadosDao.save(empleadoEncontrado);
   				
   				if (empleadoActualizado != null)
@@ -69,16 +64,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 					respuesta.setEmpleados(null);
 					return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
 				}
-  				
-  				
   			}
-  			else
-  			{
-  				respuesta.setRespuesta("Error al buscar el empleado.");
-  				respuesta.setEmpleados(null);
-  				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.NOT_FOUND);
-  			}
-
 		
 		}
 		catch (Exception e)
@@ -87,8 +73,24 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			respuesta.setEmpleados(null);
 			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
-		
+	
 		return new ResponseEntity<RespuestaEmpleados> (respuesta, HttpStatus.OK);
+	}
+	
+	
+	
+
+	@Override
+	@Transactional
+	public ResponseEntity<RespuestaEmpleados> restablecerContrasenyaPorEmpleado(ModeloEmpleados empleadoSolicitaContrasenya) 
+	{
+		
+		empleadoSolicitaContrasenya.setContrasenya(encriptarContrasenya(empleadoSolicitaContrasenya.getContrasenya()));
+		
+		ResponseEntity <RespuestaEmpleados> empleadoNuevaContrasenya = restablecerContrasenya(empleadoSolicitaContrasenya);
+		
+		return empleadoNuevaContrasenya;
+		
 
 	}
 	
@@ -96,112 +98,91 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 	@Override
 	@Transactional
-	public ResponseEntity<RespuestaEmpleadoLogueado> hacerLogin (ModeloEmpleados empleado)
+	public ResponseEntity<RespuestaEmpleadoLogueado> hacerLogin(ModeloEmpleados empleado) 
 	{
-		RespuestaEmpleadoLogueado respuesta = new RespuestaEmpleadoLogueado();
-	
-		try
-		{
-			Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
-			
-			String nombreCorreoCodigo = empleado.getNombre().toUpperCase();
-			String contrasenyaLogin = empleado.getContrasenya();
-			
-			boolean existeCorreo = false;
-			boolean existeCodigo = false;
-			
-			for (ModeloEmpleados empleadoExistente : allEmpleados)
-			{
+	    RespuestaEmpleadoLogueado respuesta = new RespuestaEmpleadoLogueado();
+	    try 
+	    {
+	        String nombreCorreoCodigo = empleado.getNombre().toUpperCase();
+	        String contrasenyaLogin = empleado.getContrasenya();
 
-				
-				 if (empleadoExistente.getCorreo() != null && empleadoExistente.getCorreo().equals(nombreCorreoCodigo)) 
-				 {
-		                existeCorreo = true;
-		                break;
-		         }
-				 if (empleadoExistente.getCodigoEmpleado() != null && empleadoExistente.getCodigoEmpleado().equals(nombreCorreoCodigo)) 
-				 {
-		                existeCodigo = true;
-		                break;
-		         }
-			}
-			
-			
-			if (existeCorreo || existeCodigo)
-			{
-				String contrasenyaBD = "";
-				
-				if (existeCorreo)
-				{
-					contrasenyaBD = empleadosDao.getContrasenyaDeEmpleadoPorCorreo(nombreCorreoCodigo);
-				}
-				else if (existeCodigo)
-				{
-					contrasenyaBD = empleadosDao.getContrasenyaDeEmpleadoPorCodigo(nombreCorreoCodigo);
-				}
-				
-				
-				
-				
-				if (verificarContrasenya(contrasenyaLogin, contrasenyaBD))
-				{
-					ModeloEmpleados empleadoLogueado = new ModeloEmpleados();
-					
-					if (existeCorreo)
-					{
-						empleadoLogueado = empleadosDao.getEmpleadoPorCorreo(nombreCorreoCodigo);
-					}
-					else if (existeCodigo)
-					{
-						empleadoLogueado = empleadosDao.getEmpleadoPorCodigo(nombreCorreoCodigo);
-					}
-			
-					 ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
-		             empleadoParaFront.setNombre(empleadoLogueado.getNombre());
-		             empleadoParaFront.setEmpleadoId(empleadoLogueado.getId());
-		             empleadoParaFront.setRol(empleadoLogueado.getRol());
-		                
-					respuesta.setRespuesta("Login correcto.");
-					respuesta.setEmpleadoLogueado(empleadoParaFront);
-					
-					//Generamos el JWT
-					String jwt = generateJWT(empleadoLogueado);
-					
-					respuesta.setJwt(jwt);
-					
-				}
-				else
-				{
-					respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
-					respuesta.setEmpleadoLogueado(null);
-					respuesta.setJwt(null);
-					return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);	
-				}
-				
-			}
-			
-			else
-			{	
-				respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
-				respuesta.setEmpleadoLogueado(null);
-				respuesta.setJwt(null);
-				return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);		
-			}
-			
-			
-		}
-		catch (Exception e)
-		{
-			respuesta.setRespuesta("Error al hacer login.");
+	        ModeloEmpleados empleadoBD = empleadosDao.getEmpleadoPorCorreo(nombreCorreoCodigo);
+	        
+	        if (empleadoBD == null) 
+	        {
+	            empleadoBD = empleadosDao.getEmpleadoPorCodigo(nombreCorreoCodigo);
+	        }
+
+
+	        if (empleadoBD == null) 
+	        {
+	            return generarRespuestaError("Error. Usuario o contraseña incorrectas.");
+	        }
+
+
+	        String contrasenyaBD = empleadoBD.getContrasenya();
+	        LocalDateTime fechaExpir = empleadoBD.getUltimaModificacionContrasenya();
+	        int numeroMesesCaducidad = 1;
+	        LocalDateTime haceUnMes = LocalDateTime.now().minusMonths(numeroMesesCaducidad);
+
+	        if (fechaExpir == null || !fechaExpir.isBefore(haceUnMes)) 
+	        {
+	            if (verificarContrasenya(contrasenyaLogin, contrasenyaBD)) 
+	            {
+	                ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
+	                
+	                empleadoParaFront.setNombre(empleadoBD.getNombre());
+	                empleadoParaFront.setEmpleadoId(empleadoBD.getId());
+	                empleadoParaFront.setRol(empleadoBD.getRol());
+	                empleadoParaFront.setCodigoEmpleado(empleadoBD.getCodigoEmpleado());
+
+	                respuesta.setRespuesta("Login correcto.");
+	                respuesta.setEmpleadoLogueado(empleadoParaFront);
+	                respuesta.setJwt(generateJWT(empleadoBD));
+
+	            } 
+	            else 
+	            {
+	             	respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
+	    			respuesta.setEmpleadoLogueado(null);
+	    			respuesta.setJwt(null);
+	    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
+	            }
+	        } 
+	        else 
+	        {
+	        	respuesta.setRespuesta("Contraseña caducada.");
+	        	
+	        	System.out.println("Fecha actual: " + LocalDateTime.now());
+	        	System.out.println("Fecha hace un mes: " + haceUnMes);
+	        	System.out.println("Ultima modificacion: " + fechaExpir);
+	        	
+	            respuesta.setEmpleadoLogueado(null);
+    			respuesta.setJwt(null);
+    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
+	        }
+
+	    } 
+	    catch (Exception e) 
+	    {
+	    	respuesta.setRespuesta("Error al hacer login.");
 			respuesta.setEmpleadoLogueado(null);
 			respuesta.setJwt(null);
 			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
-
-		return new ResponseEntity<RespuestaEmpleadoLogueado> (respuesta, HttpStatus.OK);
+	    }
+	    
+	    return new ResponseEntity<RespuestaEmpleadoLogueado> (respuesta, HttpStatus.OK);
 	}
-	
-	
+
+	private ResponseEntity<RespuestaEmpleadoLogueado> generarRespuestaError(String mensaje) 
+	{
+	    RespuestaEmpleadoLogueado respuesta = new RespuestaEmpleadoLogueado();
+	    respuesta.setRespuesta(mensaje);
+	    respuesta.setEmpleadoLogueado(null);
+	    respuesta.setJwt(null);
+	    return new ResponseEntity<>(respuesta, HttpStatus.BAD_REQUEST);
+	}
+
 	
 	
 	
@@ -219,6 +200,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		empleado.setCorreo(generateCorreo(empleado));
 		empleado.setContrasenya(encriptarContrasenya(empleado.getContrasenya()));
 		empleado.setFechaCreacion(LocalDateTime.now());
+		empleado.setUltimaModificacionContrasenya(LocalDateTime.now());
 		
 		try
 		{		
@@ -305,17 +287,17 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		boolean empleadoExiste = false;
 		try
 		{
-		Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
+			Iterable <ModeloEmpleados> allEmpleados = empleadosDao.findAll();
 		
 		
-		for (ModeloEmpleados empleadoExistente : allEmpleados)
-		{
-			if (empleadoExistente.getNombre().equals(empleado.getNombre()) && empleadoExistente.getPrimerApellido().equals(empleado.getPrimerApellido())&& empleadoExistente.getSegundoApellido().equals(empleado.getSegundoApellido())) 
-			{		        
+			for (ModeloEmpleados empleadoExistente : allEmpleados)
+			{
+				if (empleadoExistente.getNombre().equals(empleado.getNombre()) && empleadoExistente.getPrimerApellido().equals(empleado.getPrimerApellido())&& empleadoExistente.getSegundoApellido().equals(empleado.getSegundoApellido())) 
+				{		        
 			        empleadoExiste = true;
 			        break; //
+				}
 			}
-		}
 		}
 		catch (Exception e)
 		{

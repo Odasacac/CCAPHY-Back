@@ -46,6 +46,8 @@ public class ModeloEmpleados implements Serializable
 	private String contrasenya;
 	private LocalDateTime fechaCreacion;
 	
+	private LocalDateTime ultimaModificacionContrasenya;
+	
     @OneToMany(mappedBy = "responsable", cascade = CascadeType.ALL)
     private List<ModeloPacientes> pacientes;
     
