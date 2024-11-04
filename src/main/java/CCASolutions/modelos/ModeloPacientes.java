@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
+import CCASolutions.enums.EnumEstados;
 import CCASolutions.enums.EnumSexo;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
@@ -37,6 +38,9 @@ public class ModeloPacientes implements Serializable
 	private String telefonoContacto;
 	private String direccion;
 	private Date fechaNacimiento;
+	
+	@Enumerated(EnumType.STRING)
+	private EnumEstados estado;
 	
 	@Enumerated(EnumType.STRING)
 	private EnumSexo sexo;

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import CCASolutions.dao.IEmpleadosDao;
+import CCASolutions.enums.EnumEstados;
 import CCASolutions.modelos.ModeloEmpleadoLogueado;
 import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.modelos.ModeloMensajes;
@@ -46,46 +47,50 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 			
 			if (empleadoEncontrado != null)
   			{
-  				empleadoEncontrado.setContrasenya(empleadoSolicitaContrasenya.getContrasenya());
-  				empleadoEncontrado.setUltimaModificacionContrasenya(LocalDateTime.now());
-  				ModeloEmpleados empleadoActualizado = empleadosDao.save(empleadoEncontrado);
+				if (empleadoEncontrado.getEstado() == EnumEstados.ACTIVO)
+				{
+					empleadoEncontrado.setContrasenya(empleadoSolicitaContrasenya.getContrasenya());
+	  				empleadoEncontrado.setUltimaModificacionContrasenya(LocalDateTime.now());
+	  				ModeloEmpleados empleadoActualizado = empleadosDao.save(empleadoEncontrado);
+	  				
+	  				if (empleadoActualizado != null)
+					{
+						respuesta.setRespuesta("Contraseña actualizada");
+						respuesta.setEmpleados(null);
+						
+						ModeloMensajes mensajeSignUp = new ModeloMensajes();
+						mensajeSignUp.setAsunto("Cambio de contraseña");
+						
+						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'a las' HH:mm:ss");
+						String fechaHoraFormateada = LocalDateTime.now().format(formatter);
+						
+						String contenido = "Hola, " + empleadoActualizado.getNombre()
+										+ "\n\nLe informamos que su contraseña ha sido actualizada el día "
+										+ fechaHoraFormateada + "."
+										+ "\n\nPara cualquier duda puede escribir a este correo."
+										+ "\n\nGracias.";
+									
+						
+						mensajeSignUp.setContenido(contenido);
+						
+						ModeloEmpleados emisorMensaje = new ModeloEmpleados();
+						
+						emisorMensaje.setId(1L);
+						
+						mensajeSignUp.setEmisor(emisorMensaje);
+						
+						mensajeSignUp.setReceptor(empleadoActualizado);
+						
+						serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
+					}
+					else
+					{
+						respuesta.setRespuesta("Error al actualizar.");
+						respuesta.setEmpleados(null);
+						return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+					}
+				}
   				
-  				if (empleadoActualizado != null)
-				{
-					respuesta.setRespuesta("Contraseña actualizada");
-					respuesta.setEmpleados(null);
-					
-					ModeloMensajes mensajeSignUp = new ModeloMensajes();
-					mensajeSignUp.setAsunto("Cambio de contraseña");
-					
-					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'a las' HH:mm:ss");
-					String fechaHoraFormateada = LocalDateTime.now().format(formatter);
-					
-					String contenido = "Hola, " + empleadoActualizado.getNombre()
-									+ "\n\nLe informamos que su contraseña ha sido actualizada el día "
-									+ fechaHoraFormateada + "."
-									+ "\n\nPara cualquier duda puede escribir a este correo."
-									+ "\n\nGracias.";
-								
-					
-					mensajeSignUp.setContenido(contenido);
-					
-					ModeloEmpleados emisorMensaje = new ModeloEmpleados();
-					
-					emisorMensaje.setId(1L);
-					
-					mensajeSignUp.setEmisor(emisorMensaje);
-					
-					mensajeSignUp.setReceptor(empleadoActualizado);
-					
-					serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
-				}
-				else
-				{
-					respuesta.setRespuesta("Error al actualizar.");
-					respuesta.setEmpleados(null);
-					return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
-				}
   			}
 		
 		}
@@ -141,44 +146,54 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	            return generarRespuestaError("Error. Usuario o contraseña incorrectas.");
 	        }
 
-
-	        String contrasenyaBD = empleadoBD.getContrasenya();
-	        LocalDateTime fechaExpir = empleadoBD.getUltimaModificacionContrasenya();
-	        int numeroMesesCaducidad = 1;
-	        LocalDateTime haceUnMes = LocalDateTime.now().minusMonths(numeroMesesCaducidad);
-
-	        if (fechaExpir == null || !fechaExpir.isBefore(haceUnMes)) 
+	        if (empleadoBD.getEstado()== EnumEstados.ACTIVO)
 	        {
-	            if (funcionesUtiles.verificarContrasenya(contrasenyaLogin, contrasenyaBD)) 
-	            {
-	                ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
-	                
-	                empleadoParaFront.setNombre(empleadoBD.getNombre());
-	                empleadoParaFront.setEmpleadoId(empleadoBD.getId());
-	                empleadoParaFront.setRol(empleadoBD.getRol());
-	                empleadoParaFront.setCodigoEmpleado(empleadoBD.getCodigoEmpleado());
+	            String contrasenyaBD = empleadoBD.getContrasenya();
+		        LocalDateTime fechaExpir = empleadoBD.getUltimaModificacionContrasenya();
+		        int numeroMesesCaducidad = 1;
+		        LocalDateTime haceUnMes = LocalDateTime.now().minusMonths(numeroMesesCaducidad);
 
-	                respuesta.setRespuesta("Login correcto.");
-	                respuesta.setEmpleadoLogueado(empleadoParaFront);
-	                respuesta.setJwt(funcionesUtiles.generateJWT(empleadoBD));
+		        if (fechaExpir == null || !fechaExpir.isBefore(haceUnMes)) 
+		        {
+		            if (funcionesUtiles.verificarContrasenya(contrasenyaLogin, contrasenyaBD)) 
+		            {
+		                ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
+		                
+		                empleadoParaFront.setNombre(empleadoBD.getNombre());
+		                empleadoParaFront.setEmpleadoId(empleadoBD.getId());
+		                empleadoParaFront.setRol(empleadoBD.getRol());
+		                empleadoParaFront.setCodigoEmpleado(empleadoBD.getCodigoEmpleado());
 
-	            } 
-	            else 
-	            {
-	             	respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
-	    			respuesta.setEmpleadoLogueado(null);
+		                respuesta.setRespuesta("Login correcto.");
+		                respuesta.setEmpleadoLogueado(empleadoParaFront);
+		                respuesta.setJwt(funcionesUtiles.generateJWT(empleadoBD));
+
+		            } 
+		            else 
+		            {
+		             	respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
+		    			respuesta.setEmpleadoLogueado(null);
+		    			respuesta.setJwt(null);
+		    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
+		            }
+		        } 
+		        else 
+		        {
+		        	respuesta.setRespuesta("Contraseña caducada.");
+		        	
+		            respuesta.setEmpleadoLogueado(null);
 	    			respuesta.setJwt(null);
 	    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
-	            }
-	        } 
-	        else 
-	        {
-	        	respuesta.setRespuesta("Contraseña caducada.");
-	        	
-	            respuesta.setEmpleadoLogueado(null);
-    			respuesta.setJwt(null);
-    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
+		        }
 	        }
+	        else
+	        {
+	        	respuesta.setRespuesta("Usuario no activo.");
+				respuesta.setEmpleadoLogueado(null);
+				respuesta.setJwt(null);
+				return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
+	        }
+	
 
 	    } 
 	    catch (Exception e) 
@@ -219,6 +234,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		empleado.setContrasenya(funcionesUtiles.encriptarContrasenya(empleado.getContrasenya()));
 		empleado.setFechaCreacion(LocalDateTime.now());
 		empleado.setUltimaModificacionContrasenya(LocalDateTime.now());
+		empleado.setEstado(EnumEstados.valueOf("ACTIVO"));
 		
 		try
 		{		
