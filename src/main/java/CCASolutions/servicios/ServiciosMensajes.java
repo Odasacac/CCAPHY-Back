@@ -9,24 +9,78 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import CCASolutions.dao.IEmpleadosDao;
 import CCASolutions.dao.IMensajesDao;
+import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.modelos.ModeloMensajes;
+import CCASolutions.others.IFuncionesUtiles;
 import CCASolutions.respuestas.RespuestaMensajes;
 
 @Service
 public class ServiciosMensajes implements IServiciosMensajes
 {
-
+	@Autowired
+	private IFuncionesUtiles funcionesUtiles;
+	
 	@Autowired
 	private IMensajesDao mensajesDao;
+	
+	@Autowired
+	private IEmpleadosDao empleadosDao;
+	
+
+	
+	
+	@Override
+	public ResponseEntity<RespuestaMensajes> mensajeParaRestablecerContrasenya(ModeloEmpleados empleado) 
+	{
+		ModeloMensajes mensajeParaAdmin = new ModeloMensajes();
+		
+		try
+		{
+			ModeloEmpleados empleadoBD = empleadosDao.getEmpleadoPorCodigo(empleado.getCodigoEmpleado());
+			
+			if (empleadoBD != null)
+			{
+				mensajeParaAdmin.setAsunto("Solicitud de cambio de contraseña.");
+				
+				
+				String contenido = "Hola, "
+								+ "\n\nEl empleado con código: " + empleado.getCodigoEmpleado().toUpperCase()
+								+ "\nHa solicitado restablecer su contraseña actual por la siguiente: "
+								+ "\n" + funcionesUtiles.encriptarContrasenya(empleado.getContrasenya())
+								+ "\n\nPara cualquier duda puede escribir a este correo."
+								+ "\n\nGracias.";
+				
+				mensajeParaAdmin.setContenido(contenido);
+				
+				ModeloEmpleados emisorYReceptorMensaje = new ModeloEmpleados();
+				
+				emisorYReceptorMensaje.setId(1L);
+				
+				mensajeParaAdmin.setEmisor(emisorYReceptorMensaje);
+				
+				mensajeParaAdmin.setReceptor(emisorYReceptorMensaje);
+
+				return guardarNuevoMensaje(mensajeParaAdmin);
+			}
+			
+		}
+		catch (Exception e)
+		{
+			return new ResponseEntity<RespuestaMensajes> (HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return null;
+	}
+	
 
 	@Override
 	public ResponseEntity<RespuestaMensajes> guardarNuevoMensaje(ModeloMensajes mensaje) 
 	{
 		RespuestaMensajes respuesta = new RespuestaMensajes ();
 		
-		mensaje.setAsunto(capitalizer(mensaje.getAsunto()));
-		mensaje.setContenido(capitalizer(mensaje.getContenido()));
+		mensaje.setAsunto(funcionesUtiles.capitalizer(mensaje.getAsunto()));
+		mensaje.setContenido(funcionesUtiles.capitalizer(mensaje.getContenido()));
 		mensaje.setFechaEnvio(LocalDateTime.now());
 		
 		try
@@ -39,7 +93,7 @@ public class ServiciosMensajes implements IServiciosMensajes
 			mensajes.add(mensajeGuardado);
 			
 			respuesta.setRespuesta("Mensaje enviado correctamente.");
-			respuesta.setMensajes(mensajes);
+			respuesta.setMensajes(null);
 
 		}
 		else
@@ -60,15 +114,7 @@ public class ServiciosMensajes implements IServiciosMensajes
 		return new ResponseEntity <RespuestaMensajes> (respuesta, HttpStatus.OK);
 	}
 	
-	private static String capitalizer (String cadena) 
-	 {
-		 if (cadena == null || cadena.isEmpty()) 
-		 {
-			 return cadena; 
-		 }
-		 return cadena.substring(0, 1).toUpperCase() + cadena.substring(1);
-	 }
-	
+
 	
 	
 }

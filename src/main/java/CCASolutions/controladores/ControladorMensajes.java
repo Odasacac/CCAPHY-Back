@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.modelos.ModeloMensajes;
 import CCASolutions.respuestas.RespuestaMensajes;
 import CCASolutions.servicios.IServiciosMensajes;
@@ -25,6 +26,13 @@ public class ControladorMensajes
 	public ResponseEntity<RespuestaMensajes> guardarNuevoMensaje (@RequestBody ModeloMensajes mensaje)
 	{
 		return serviciosMensajes.guardarNuevoMensaje(mensaje);
+	}
+	
+	@PostMapping("/mensajes/cambioContrasenya")
+	
+	public ResponseEntity<RespuestaMensajes> mensajeParaRestablecerContrasenya (@RequestBody ModeloEmpleados empleado)
+	{
+		return serviciosMensajes.mensajeParaRestablecerContrasenya(empleado);
 	}
 
 }

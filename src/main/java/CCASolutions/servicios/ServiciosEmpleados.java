@@ -1,19 +1,14 @@
 package CCASolutions.servicios;
 
-import java.nio.charset.StandardCharsets;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-
-import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,23 +16,22 @@ import CCASolutions.dao.IEmpleadosDao;
 import CCASolutions.modelos.ModeloEmpleadoLogueado;
 import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.modelos.ModeloMensajes;
+import CCASolutions.others.IFuncionesUtiles;
 import CCASolutions.respuestas.RespuestaEmpleadoLogueado;
 import CCASolutions.respuestas.RespuestaEmpleados;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
 
 @Service
 public class ServiciosEmpleados implements IServiciosEmpleados
 {
+	@Autowired
+	private IFuncionesUtiles funcionesUtiles;
+	
 	@Autowired
 	private IEmpleadosDao empleadosDao;
 
 	@Autowired
 	private IServiciosMensajes serviciosMensajes;
 
-	@Value("${jwt.secret-key}")
-	private String secretKey;
 	
 	
 	
@@ -113,7 +107,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	public ResponseEntity<RespuestaEmpleados> restablecerContrasenyaPorEmpleado(ModeloEmpleados empleadoSolicitaContrasenya) 
 	{
 		
-		empleadoSolicitaContrasenya.setContrasenya(encriptarContrasenya(empleadoSolicitaContrasenya.getContrasenya()));
+		empleadoSolicitaContrasenya.setContrasenya(funcionesUtiles.encriptarContrasenya(empleadoSolicitaContrasenya.getContrasenya()));
 		
 		ResponseEntity <RespuestaEmpleados> empleadoNuevaContrasenya = restablecerContrasenya(empleadoSolicitaContrasenya);
 		
@@ -155,7 +149,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 
 	        if (fechaExpir == null || !fechaExpir.isBefore(haceUnMes)) 
 	        {
-	            if (verificarContrasenya(contrasenyaLogin, contrasenyaBD)) 
+	            if (funcionesUtiles.verificarContrasenya(contrasenyaLogin, contrasenyaBD)) 
 	            {
 	                ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
 	                
@@ -166,7 +160,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 
 	                respuesta.setRespuesta("Login correcto.");
 	                respuesta.setEmpleadoLogueado(empleadoParaFront);
-	                respuesta.setJwt(generateJWT(empleadoBD));
+	                respuesta.setJwt(funcionesUtiles.generateJWT(empleadoBD));
 
 	            } 
 	            else 
@@ -217,18 +211,18 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	{
 		RespuestaEmpleados respuesta = new RespuestaEmpleados();
 		
-		empleado.setNombre(capitalizer(empleado.getNombre()));
-		empleado.setPrimerApellido(capitalizer(empleado.getPrimerApellido()));
-		empleado.setSegundoApellido(capitalizer(empleado.getSegundoApellido()));
-		empleado.setCodigoEmpleado(generateCode(empleado));
-		empleado.setCorreo(generateCorreo(empleado));
-		empleado.setContrasenya(encriptarContrasenya(empleado.getContrasenya()));
+		empleado.setNombre(funcionesUtiles.capitalizer(empleado.getNombre()));
+		empleado.setPrimerApellido(funcionesUtiles.capitalizer(empleado.getPrimerApellido()));
+		empleado.setSegundoApellido(funcionesUtiles.capitalizer(empleado.getSegundoApellido()));
+		empleado.setCodigoEmpleado(funcionesUtiles.generateCode(empleado));
+		empleado.setCorreo(funcionesUtiles.generateCorreo(empleado));
+		empleado.setContrasenya(funcionesUtiles.encriptarContrasenya(empleado.getContrasenya()));
 		empleado.setFechaCreacion(LocalDateTime.now());
 		empleado.setUltimaModificacionContrasenya(LocalDateTime.now());
 		
 		try
 		{		
-			if (comprobarEmpleadoExistePorNombreCompleto(empleado))
+			if (funcionesUtiles.comprobarEmpleadoExistePorNombreCompleto(empleado))
 			{
 				respuesta.setRespuesta("Empleado ya existente.");
 				respuesta.setEmpleados(null);
@@ -289,206 +283,4 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	
 	
 	
-	
-	
-	
-	//METODOS APARTE
-	
-	
-	
-	private boolean verificarContrasenya (String contrasenyaIngresada, String hashAlmacenado)
-	{
-		
-		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
-		return encoder.matches(contrasenyaIngresada, hashAlmacenado);
-
 	}
-	
-	
-	private String generateJWT(ModeloEmpleados empleado)
-	{
-		Date now = new Date();
-		Date expiryDate = new Date(now.getTime() + 86400000);
-		
-		SecretKey key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
-
-		String token = Jwts.builder()
-        	.setSubject(empleado.getCodigoEmpleado())
-        	.claim("role", empleado.getRol()) 
-        	.setIssuedAt(now)
-        	.setExpiration(expiryDate) 
-        	.signWith(key, SignatureAlgorithm.HS256)
-        	.compact();
-
-			return token;
-	}
-	
-	
-
-	
-	private boolean comprobarEmpleadoExistePorNombreCompleto(ModeloEmpleados empleado) 
-	{
-	    boolean empleadoExiste = false;
-
-	    try 
-	    {
-
-	        if (empleado.getNombre() == null || empleado.getPrimerApellido() == null || empleado.getSegundoApellido() == null) 
-	        {
-	            return false;
-	        }
-
-
-	        empleadoExiste = empleadosDao.existsByNombreAndPrimerApellidoAndSegundoApellido(empleado.getNombre(), empleado.getPrimerApellido(), empleado.getSegundoApellido());
-	    } 
-	    catch (Exception e) 
-	    {
-	        System.out.println("Error: " + e);
-	    }
-
-	    return empleadoExiste;
-	}
-
-
-	
-	
-	private String generateCorreo(ModeloEmpleados empleado) 
-	{
-	    String correo;
-	    Random random = new Random();
-	    String caracteres = "1234567890";
-
-	    try 
-	    {
-	        List<String> allMails = empleadosDao.findAllCorreos();
-
-	        char primeraParte = empleado.getNombre().charAt(0);
-	        String segundaParte = empleado.getPrimerApellido();
-	        String terceraParte = empleado.getSegundoApellido();
-	        correo = ("" + primeraParte + segundaParte + terceraParte + "@CCAPHY.COM").toUpperCase();
-
-	        
-	        if (!allMails.contains(correo)) 
-	        {
-	            return correo;
-	        }
-
-	       
-	        do 
-	        {
-	            StringBuilder randomStr = new StringBuilder();
-	            for (int i = 0; i < 3; i++) 
-	            {
-	                int indiceAleatorio = random.nextInt(caracteres.length());
-	                char caracterAleatorio = caracteres.charAt(indiceAleatorio);
-	                randomStr.append(caracterAleatorio);
-	            }
-	            correo = "CORREOPROVISIONAL" + randomStr + "@CCAPHY.COM".toUpperCase();
-	        } 
-	        while (allMails.contains(correo));
-
-	    } 
-	    catch (Exception e) 
-	    {
-	       
-	        return "ERRORCORREOPROVISIONAL@CCAPHY.COM";
-	    }
-
-	    return correo;
-	}
-
-	
-	private static String encriptarContrasenya (String contrasenya)
-	{
-		
-		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
-
-		return encoder.encode(contrasenya);
-
-	}
-	
-	
-	
-	 private static String capitalizer (String cadena) 
-	 {
-		 if (cadena == null || cadena.isEmpty()) 
-		 {
-			 return cadena; 
-		 }
-		 return cadena.substring(0, 1).toUpperCase() + cadena.substring(1);
-	 }
-	 
-	 private String generateCode (ModeloEmpleados empleado)
-	 {
-		 String codigo = "";
-		 boolean valido = false;
-		 boolean coincide = false;
-		 int caracter = 0;
-		 
-		 try
-		 {
-			 List<String> allCodes = empleadosDao.findAllCodigoUsuario();
-		 
-			 
-			 while (!valido)
-			 {
-				 if (caracter >= empleado.getNombre().length() || caracter >= empleado.getPrimerApellido().length() || caracter >= empleado.getSegundoApellido().length()) 
-				 {
-					 throw new IllegalStateException("No se pudo generar un código único. No hay suficientes caracteres disponibles.");
-			     }
-				 
-				 char primerCaracter = empleado.getNombre().charAt(caracter);
-				 char segundoCaracter = empleado.getPrimerApellido().charAt(caracter);
-				 char tercerCaracter = empleado.getSegundoApellido().charAt(caracter);
-			 
-				 codigo = ("" + primerCaracter + segundoCaracter + tercerCaracter).toUpperCase();
-				 coincide = false;
-				 
-				 for (int i = 0; i < allCodes.size(); i ++)
-				 {
-					 if (codigo.equals(allCodes.get(i)))
-					 {
-						coincide = true;
-					 	break;
-					 }
-				 }
-			 
-				 if (!coincide)
-				 {
-					 valido = true;
-				 }
-				 else
-				 {
-					 caracter = caracter +1;
-				 }
-			 
-			 }
-
-			 return codigo;
-		 }
-		 catch (Exception e)
-		 {
-			 System.out.println("Error: " + e);
-			 Random random = new Random();
-			 StringBuilder  codigoGeneradoAleatoriamente = new StringBuilder();
-		     String caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-
-		     for (int i = 0; i < 3; i++) 
-		     {
-		    	 int indiceAleatorio = random.nextInt(caracteres.length()); 
-		    	 char caracterAleatorio = caracteres.charAt(indiceAleatorio);
-		    	 codigoGeneradoAleatoriamente.append(caracterAleatorio);
-		     }
-	
-			 	
-			 return codigoGeneradoAleatoriamente.toString();
-		 }
-		 }
-
-
-
-
-
-
-}
