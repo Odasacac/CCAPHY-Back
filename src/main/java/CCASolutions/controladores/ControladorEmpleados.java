@@ -47,4 +47,10 @@ public class ControladorEmpleados
 		return serviciosEmpleados.restablecerContrasenyaPorEmpleado(empleado);
 	}
 	
+	@PutMapping ("/empleados/activdesac")
+	public ResponseEntity<RespuestaEmpleados> activarDesactivarEmpleado (@RequestBody ModeloEmpleados empleado)
+	{
+		return serviciosEmpleados.activarDesactivarEmpleado(empleado);
+	}
+	
 }

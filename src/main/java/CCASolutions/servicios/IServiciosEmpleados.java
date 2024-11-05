@@ -13,4 +13,6 @@ public interface IServiciosEmpleados
 	
 	public ResponseEntity<RespuestaEmpleados> restablecerContrasenya (ModeloEmpleados empleado);
 	public ResponseEntity<RespuestaEmpleados> restablecerContrasenyaPorEmpleado (ModeloEmpleados empleado);
+	
+	public ResponseEntity<RespuestaEmpleados> activarDesactivarEmpleado (ModeloEmpleados empleado);
 }

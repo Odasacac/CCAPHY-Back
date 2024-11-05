@@ -34,6 +34,52 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	private IServiciosMensajes serviciosMensajes;
 
 	
+
+
+
+	@Override
+	@Transactional
+	public ResponseEntity<RespuestaEmpleados> activarDesactivarEmpleado(ModeloEmpleados empleado) 
+	{
+		RespuestaEmpleados respuesta = new RespuestaEmpleados();
+		
+		try
+		{
+			ModeloEmpleados empleadoBD = empleadosDao.getEmpleadoPorCodigo(empleado.getCodigoEmpleado());
+			
+			if (empleadoBD != null)
+			{
+				
+				if (empleadoBD.getEstado()==EnumEstados.ACTIVO)
+				{
+					empleadoBD.setEstado(EnumEstados.INACTIVO);
+				}
+				else if (empleadoBD.getEstado()==EnumEstados.INACTIVO)
+				{
+					empleadoBD.setEstado(EnumEstados.ACTIVO);
+				}
+				
+				respuesta.setRespuesta("Empleado " + empleado.getCodigoEmpleado() + " ahora está " + empleadoBD.getEstado().toString().toLowerCase() + ".");
+			}
+			else
+			{
+				respuesta.setRespuesta("El empleado no existe");
+				respuesta.setEmpleados(null);
+				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+			}
+			
+			
+		}
+		catch(Exception e)
+		{
+			respuesta.setRespuesta("Error activar o desactivar el empleado: " + e);
+			respuesta.setEmpleados(null);
+			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return new ResponseEntity<RespuestaEmpleados> (respuesta, HttpStatus.OK);
+	}
+	
 	
 	
 	@Override
@@ -50,37 +96,37 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 				if (empleadoEncontrado.getEstado() == EnumEstados.ACTIVO)
 				{
 					empleadoEncontrado.setContrasenya(empleadoSolicitaContrasenya.getContrasenya());
-	  				empleadoEncontrado.setUltimaModificacionContrasenya(LocalDateTime.now());
-	  				ModeloEmpleados empleadoActualizado = empleadosDao.save(empleadoEncontrado);
-	  				
-	  				if (empleadoActualizado != null)
+		  			empleadoEncontrado.setUltimaModificacionContrasenya(LocalDateTime.now());
+		  			ModeloEmpleados empleadoActualizado = empleadosDao.save(empleadoEncontrado);
+		  				
+		  			if (empleadoActualizado != null)
 					{
-						respuesta.setRespuesta("Contraseña actualizada");
+						respuesta.setRespuesta("Contraseña actualizada.");
 						respuesta.setEmpleados(null);
-						
+							
 						ModeloMensajes mensajeSignUp = new ModeloMensajes();
 						mensajeSignUp.setAsunto("Cambio de contraseña");
-						
+							
 						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'a las' HH:mm:ss");
 						String fechaHoraFormateada = LocalDateTime.now().format(formatter);
-						
+							
 						String contenido = "Hola, " + empleadoActualizado.getNombre()
-										+ "\n\nLe informamos que su contraseña ha sido actualizada el día "
-										+ fechaHoraFormateada + "."
-										+ "\n\nPara cualquier duda puede escribir a este correo."
-										+ "\n\nGracias.";
-									
-						
+											+ "\n\nLe informamos que su contraseña ha sido actualizada el día "
+											+ fechaHoraFormateada + "."
+											+ "\n\nPara cualquier duda puede escribir a este correo."
+											+ "\n\nGracias.";
+										
+							
 						mensajeSignUp.setContenido(contenido);
-						
+							
 						ModeloEmpleados emisorMensaje = new ModeloEmpleados();
-						
+							
 						emisorMensaje.setId(1L);
-						
+							
 						mensajeSignUp.setEmisor(emisorMensaje);
-						
+							
 						mensajeSignUp.setReceptor(empleadoActualizado);
-						
+							
 						serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
 					}
 					else
@@ -90,9 +136,13 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 						return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
 					}
 				}
-  				
-  			}
-		
+				else
+				{
+					respuesta.setRespuesta("Empleado inactivo.");
+					respuesta.setEmpleados(null);
+					return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+				}					
+			}					
 		}
 		catch (Exception e)
 		{
@@ -111,12 +161,35 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 	@Transactional
 	public ResponseEntity<RespuestaEmpleados> restablecerContrasenyaPorEmpleado(ModeloEmpleados empleadoSolicitaContrasenya) 
 	{
+		RespuestaEmpleados respuesta = new RespuestaEmpleados();
+		try
+		{
+			ModeloEmpleados empleadoEncontrado = empleadosDao.getEmpleadoPorCodigo(empleadoSolicitaContrasenya.getCodigoEmpleado());
+			
+			if (!funcionesUtiles.verificarContrasenya(empleadoSolicitaContrasenya.getContrasenya(), empleadoEncontrado.getContrasenya()))
+			{
+				empleadoSolicitaContrasenya.setContrasenya(funcionesUtiles.encriptarContrasenya(empleadoSolicitaContrasenya.getContrasenya()));
+			}
+			else
+			{
+				respuesta.setRespuesta("Contraseña anterior.");
+				respuesta.setEmpleados(null);
+				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+			}
+
+			
+		}
+		catch (Exception e)
+		{
+			respuesta.setRespuesta("Error al restablecer la contraseña: "+e);
+			respuesta.setEmpleados(null);
+			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 		
-		empleadoSolicitaContrasenya.setContrasenya(funcionesUtiles.encriptarContrasenya(empleadoSolicitaContrasenya.getContrasenya()));
 		
-		ResponseEntity <RespuestaEmpleados> empleadoNuevaContrasenya = restablecerContrasenya(empleadoSolicitaContrasenya);
 		
-		return empleadoNuevaContrasenya;
+		
+		return restablecerContrasenya(empleadoSolicitaContrasenya);
 		
 
 	}
@@ -296,7 +369,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		
 		return new ResponseEntity<RespuestaEmpleados> (respuesta, HttpStatus.OK);
 	}
-	
-	
+
+
 	
 	}

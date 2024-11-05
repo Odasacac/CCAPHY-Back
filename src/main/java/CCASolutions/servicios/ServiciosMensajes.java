@@ -42,15 +42,27 @@ public class ServiciosMensajes implements IServiciosMensajes
 			
 			if (empleadoBD != null)
 			{
-				mensajeParaAdmin.setAsunto("Solicitud de cambio de contraseña.");
+				String contenido = "";
 				
-				
-				String contenido = "Hola, "
-								+ "\n\nEl empleado con código: " + empleado.getCodigoEmpleado().toUpperCase()
-								+ "\nHa solicitado restablecer su contraseña actual por la siguiente: "
-								+ "\n" + funcionesUtiles.encriptarContrasenya(empleado.getContrasenya())
-								+ "\n\nPara cualquier duda puede escribir a este correo."
-								+ "\n\nGracias.";
+				if (!funcionesUtiles.verificarContrasenya(empleado.getContrasenya(), empleadoBD.getContrasenya()))
+				{
+					contenido = "Hola, "
+							+ "\n\nEl empleado con código: " + empleado.getCodigoEmpleado().toUpperCase()
+							+ "\nHa solicitado restablecer su contraseña actual por la siguiente: "
+							+ "\n" + funcionesUtiles.encriptarContrasenya(empleado.getContrasenya())
+							+ "\n\nPara cualquier duda puede escribir a este correo."
+							+ "\n\nGracias.";
+				}
+				else
+				{
+					contenido = "Hola, "
+							+ "\n\nEl empleado con código: " + empleado.getCodigoEmpleado().toUpperCase()
+							+ "\nHa solicitado restablecer su contraseña actual."
+							+ "\nSin embargo, ha ingresado la contraseña que está en uso ahora."
+							+ "\n\nPor favor, póngase en contacto con dicho empleado."
+							+ "\n\nGracias.";
+				}
+				mensajeParaAdmin.setAsunto("Solicitud de cambio de contraseña");
 				
 				mensajeParaAdmin.setContenido(contenido);
 				
