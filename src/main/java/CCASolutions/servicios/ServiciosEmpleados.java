@@ -13,8 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import CCASolutions.dao.IEmpleadosDao;
+import CCASolutions.dtos.DTOEmpleadoLogueado;
 import CCASolutions.enums.EnumEstados;
-import CCASolutions.modelos.ModeloEmpleadoLogueado;
 import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.modelos.ModeloMensajes;
 import CCASolutions.others.IFuncionesUtiles;
@@ -230,7 +230,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		        {
 		            if (funcionesUtiles.verificarContrasenya(contrasenyaLogin, contrasenyaBD)) 
 		            {
-		                ModeloEmpleadoLogueado empleadoParaFront = new ModeloEmpleadoLogueado();
+		                DTOEmpleadoLogueado empleadoParaFront = new DTOEmpleadoLogueado();
 		                
 		                empleadoParaFront.setNombre(empleadoBD.getNombre());
 		                empleadoParaFront.setEmpleadoId(empleadoBD.getId());

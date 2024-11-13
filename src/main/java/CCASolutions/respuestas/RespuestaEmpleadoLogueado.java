@@ -1,12 +1,12 @@
 package CCASolutions.respuestas;
 
-import CCASolutions.modelos.ModeloEmpleadoLogueado;
+import CCASolutions.dtos.DTOEmpleadoLogueado;
 import lombok.Data;
 
 @Data
 public class RespuestaEmpleadoLogueado 
 {
-	private ModeloEmpleadoLogueado empleadoLogueado;
+	private DTOEmpleadoLogueado empleadoLogueado;
 	private String respuesta;
 	private String jwt;
 }
