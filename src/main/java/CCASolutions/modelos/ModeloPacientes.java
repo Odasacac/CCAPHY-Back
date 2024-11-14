@@ -38,6 +38,7 @@ public class ModeloPacientes implements Serializable
 	private String telefonoContacto;
 	private String direccion;
 	private Date fechaNacimiento;
+	private String edad;
 	
 	@Enumerated(EnumType.STRING)
 	private EnumEstados estado;
@@ -48,7 +49,7 @@ public class ModeloPacientes implements Serializable
 	private Date fechaAlta;
 	private Date fechaBaja;
 	
-	private String sintomas;
+	private String motivoConsulta;
 	
 	@ManyToOne
 	@JoinColumn(name = "responsableId", referencedColumnName = "id")

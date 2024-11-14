@@ -226,22 +226,32 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		        int numeroMesesCaducidad = 1;
 		        LocalDateTime haceUnMes = LocalDateTime.now().minusMonths(numeroMesesCaducidad);
 
-		        if (fechaExpir == null || !fechaExpir.isBefore(haceUnMes)) 
-		        {
+		       
 		            if (funcionesUtiles.verificarContrasenya(contrasenyaLogin, contrasenyaBD)) 
 		            {
-		                DTOEmpleadoLogueado empleadoParaFront = new DTOEmpleadoLogueado();
+		            	if (fechaExpir == null || !fechaExpir.isBefore(haceUnMes)) 
+		 		        {
+		            		DTOEmpleadoLogueado empleadoParaFront = new DTOEmpleadoLogueado();
 		                
-		                empleadoParaFront.setNombre(empleadoBD.getNombre());
-		                empleadoParaFront.setEmpleadoId(empleadoBD.getId());
-		                empleadoParaFront.setRol(empleadoBD.getRol());
-		                empleadoParaFront.setCodigoEmpleado(empleadoBD.getCodigoEmpleado());
+		            		empleadoParaFront.setNombre(empleadoBD.getNombre());
+		            		empleadoParaFront.setEmpleadoId(empleadoBD.getId());
+		            		empleadoParaFront.setRol(empleadoBD.getRol());
+		               		empleadoParaFront.setCodigoEmpleado(empleadoBD.getCodigoEmpleado());
 
-		                respuesta.setRespuesta("Login correcto.");
-		                respuesta.setEmpleadoLogueado(empleadoParaFront);
-		                respuesta.setJwt(funcionesUtiles.generateJWT(empleadoBD));
+		               		respuesta.setRespuesta("Login correcto.");
+		               		respuesta.setEmpleadoLogueado(empleadoParaFront);
+		               		respuesta.setJwt(funcionesUtiles.generateJWT(empleadoBD));
 
-		            } 
+		 		        } 
+		            	 else 
+		 		        {
+		 		        	respuesta.setRespuesta("Contraseña caducada.");
+		 		        	
+		 		            respuesta.setEmpleadoLogueado(null);
+		 	    			respuesta.setJwt(null);
+		 	    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
+		 		        }
+		            }
 		            else 
 		            {
 		             	respuesta.setRespuesta("Error. Usuario o contraseña incorrectas.");
@@ -249,15 +259,8 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		    			respuesta.setJwt(null);
 		    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
 		            }
-		        } 
-		        else 
-		        {
-		        	respuesta.setRespuesta("Contraseña caducada.");
-		        	
-		            respuesta.setEmpleadoLogueado(null);
-	    			respuesta.setJwt(null);
-	    			return new ResponseEntity<RespuestaEmpleadoLogueado>(respuesta, HttpStatus.BAD_REQUEST);
-		        }
+		        
+		       
 	        }
 	        else
 	        {
