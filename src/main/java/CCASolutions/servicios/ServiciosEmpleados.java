@@ -127,7 +127,7 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		}
 		catch(Exception e)
 		{
-			respuesta.setRespuesta("Error activar o desactivar el empleado: " + e);
+			respuesta.setRespuesta("Error hacer o deshacer responsable: " + e);
 			respuesta.setEmpleados(null);
 			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
