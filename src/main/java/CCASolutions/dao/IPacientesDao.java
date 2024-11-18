@@ -6,5 +6,5 @@ import CCASolutions.modelos.ModeloPacientes;
 
 public interface IPacientesDao extends CrudRepository<ModeloPacientes, Long>
 {
-
+	boolean existsByResponsableId(Long responsableId);
 }

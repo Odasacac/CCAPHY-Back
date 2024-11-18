@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import CCASolutions.dtos.DTOCambiosResponsabilidad;
 import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.respuestas.RespuestaEmpleados;
 import CCASolutions.servicios.IServiciosEmpleados;
@@ -51,6 +52,18 @@ public class ControladorEmpleados
 	public ResponseEntity<RespuestaEmpleados> activarDesactivarEmpleado (@RequestBody ModeloEmpleados empleado)
 	{
 		return serviciosEmpleados.activarDesactivarEmpleado(empleado);
+	}
+	
+	@PutMapping ("/empleados/hacerdesres")
+	public ResponseEntity<RespuestaEmpleados> hacerDeshacerResponsable (@RequestBody ModeloEmpleados empleado)
+	{
+		return serviciosEmpleados.hacerDeshacerResponsable(empleado);
+	}
+	
+	@PutMapping ("/empleados/cambiores")
+	public ResponseEntity<RespuestaEmpleados> cambiarResponsableDeEmpleado (@RequestBody DTOCambiosResponsabilidad ids)
+	{
+		return serviciosEmpleados.cambiarResponsableDeEmpleado(ids);
 	}
 	
 }

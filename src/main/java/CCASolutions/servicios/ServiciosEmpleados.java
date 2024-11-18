@@ -3,6 +3,7 @@ package CCASolutions.servicios;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -13,8 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import CCASolutions.dao.IEmpleadosDao;
+import CCASolutions.dao.IPacientesDao;
+import CCASolutions.dtos.DTOCambiosResponsabilidad;
 import CCASolutions.dtos.DTOEmpleadoLogueado;
 import CCASolutions.enums.EnumEstados;
+import CCASolutions.enums.EnumRoles;
 import CCASolutions.modelos.ModeloEmpleados;
 import CCASolutions.modelos.ModeloMensajes;
 import CCASolutions.others.IFuncionesUtiles;
@@ -32,9 +36,104 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 
 	@Autowired
 	private IServiciosMensajes serviciosMensajes;
+	
+	@Autowired
+	private IPacientesDao pacientesDao;
 
 	
+	@Override
+	public ResponseEntity<RespuestaEmpleados> cambiarResponsableDeEmpleado(DTOCambiosResponsabilidad ids) 
+	{
+		RespuestaEmpleados respuesta = new RespuestaEmpleados();
+		
+		try
+		{
+			Optional <ModeloEmpleados> nuevoEmpleadoOptional = empleadosDao.findById(ids.getResponsabilizadoId());
+			
+			if (nuevoEmpleadoOptional.isPresent())
+			{
+				ModeloEmpleados nuevoEmpleado = nuevoEmpleadoOptional.get();
+				
+				nuevoEmpleado.setResponsableId(ids.getNuevoResponsableId());
+				
+				empleadosDao.save(nuevoEmpleado);
+				
+				respuesta.setRespuesta("Responsable del empleado " + nuevoEmpleado.getCodigoEmpleado() + " cambiado con éxito.");
+				respuesta.setEmpleados(null);
+			}
+			
+			else
+			{
+				respuesta.setRespuesta("El empleado no existe");
+				respuesta.setEmpleados(null);
+				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+			}
+			
+		
+		}
+		catch (Exception e)
+		{
+			respuesta.setRespuesta("Error al cambiar responsabilidades: " + e);
+			respuesta.setEmpleados(null);
+			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		
+		return new ResponseEntity<RespuestaEmpleados> (respuesta, HttpStatus.OK);
+	}
 
+	@Override
+	public ResponseEntity<RespuestaEmpleados> hacerDeshacerResponsable(ModeloEmpleados empleado) 
+	{
+		
+		RespuestaEmpleados respuesta = new RespuestaEmpleados();
+		
+		try
+		{
+			ModeloEmpleados empleadoBD = empleadosDao.getEmpleadoPorCodigo(empleado.getCodigoEmpleado());
+			
+			if (empleadoBD != null)
+			{
+				
+				if (empleadoBD.getRol()==EnumRoles.RESPONSABLE)
+				{
+					if (!pacientesDao.existsByResponsableId(empleadoBD.getId()))
+					{
+						empleadoBD.setRol(EnumRoles.EMPLEADO);
+						empleadosDao.save(empleadoBD);
+					}
+					else
+					{
+						respuesta.setRespuesta("El responsable aun tiene personal a su cargo.");
+						respuesta.setEmpleados(null);
+						return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+					}
+				}
+				else if (empleadoBD.getRol()==EnumRoles.EMPLEADO)
+				{
+					empleadoBD.setRol(EnumRoles.RESPONSABLE);
+					empleadosDao.save(empleadoBD);
+				}
+				
+				respuesta.setRespuesta("Empleado " + empleado.getCodigoEmpleado() + " ahora es un " + empleadoBD.getRol().toString().toLowerCase() + ".");
+			}
+			else
+			{
+				respuesta.setRespuesta("El empleado no existe");
+				respuesta.setEmpleados(null);
+				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+			}
+			
+			
+		}
+		catch(Exception e)
+		{
+			respuesta.setRespuesta("Error activar o desactivar el empleado: " + e);
+			respuesta.setEmpleados(null);
+			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+		return new ResponseEntity<RespuestaEmpleados> (respuesta, HttpStatus.OK);
+	}
 
 
 	@Override
@@ -53,10 +152,12 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 				if (empleadoBD.getEstado()==EnumEstados.ACTIVO)
 				{
 					empleadoBD.setEstado(EnumEstados.INACTIVO);
+					empleadosDao.save(empleadoBD);
 				}
 				else if (empleadoBD.getEstado()==EnumEstados.INACTIVO)
 				{
 					empleadoBD.setEstado(EnumEstados.ACTIVO);
+					empleadosDao.save(empleadoBD);
 				}
 				
 				respuesta.setRespuesta("Empleado " + empleado.getCodigoEmpleado() + " ahora está " + empleadoBD.getEstado().toString().toLowerCase() + ".");
@@ -304,67 +405,76 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		empleado.setUltimaModificacionContrasenya(LocalDateTime.now());
 		empleado.setEstado(EnumEstados.valueOf("ACTIVO"));
 		
-		try
-		{		
-			if (funcionesUtiles.comprobarEmpleadoExistePorNombreCompleto(empleado))
-			{
-				respuesta.setRespuesta("Empleado ya existente.");
-				respuesta.setEmpleados(null);
-				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
-			}
-			else
-			{
-				ModeloEmpleados empleadoGuardado = empleadosDao.save(empleado);
-			
-				if (empleadoGuardado != null)
+		if (empleado.getResponsableId() != null && empleado.getRol() != EnumRoles.ADMIN)
+		{
+			try
+			{		
+				if (funcionesUtiles.comprobarEmpleadoExistePorNombreCompleto(empleado))
 				{
-					respuesta.setRespuesta(empleadoGuardado.getCorreo());
-					respuesta.setEmpleados(null);
-					
-					ModeloMensajes mensajeSignUp = new ModeloMensajes();
-					mensajeSignUp.setAsunto("Bienvenid@ a CCAPHY, " + empleadoGuardado.getNombre());
-					
-					String contenido = "Le damos la bienvenida a CCAPHY,"
-									+ "\n\nSu dirección de correo electrónico es: " + empleadoGuardado.getCorreo()
-									+ "\nSu código de empleado es: " + empleadoGuardado.getCodigoEmpleado()
-									+ "\n\nPara cualquier duda puede escribir a este correo."
-									+ "\n\nGracias.";
-								
-					
-					mensajeSignUp.setContenido(contenido);
-					
-					ModeloEmpleados emisorMensaje = new ModeloEmpleados();
-					
-					emisorMensaje.setId(1L);
-					
-					mensajeSignUp.setEmisor(emisorMensaje);
-					
-					mensajeSignUp.setReceptor(empleadoGuardado);
-					
-					serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
-					
-				}
-				else
-				{
-					respuesta.setRespuesta("Error al almacenar.");
+					respuesta.setRespuesta("Empleado ya existente.");
 					respuesta.setEmpleados(null);
 					return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
 				}
+				else
+				{
+					ModeloEmpleados empleadoGuardado = empleadosDao.save(empleado);
+				
+					if (empleadoGuardado != null)
+					{
+						respuesta.setRespuesta(empleadoGuardado.getCorreo());
+						respuesta.setEmpleados(null);
+						
+						ModeloMensajes mensajeSignUp = new ModeloMensajes();
+						mensajeSignUp.setAsunto("Bienvenid@ a CCAPHY, " + empleadoGuardado.getNombre());
+						
+						String contenido = "Le damos la bienvenida a CCAPHY,"
+										+ "\n\nSu dirección de correo electrónico es: " + empleadoGuardado.getCorreo()
+										+ "\nSu código de empleado es: " + empleadoGuardado.getCodigoEmpleado()
+										+ "\n\nPara cualquier duda puede escribir a este correo."
+										+ "\n\nGracias.";
+									
+						
+						mensajeSignUp.setContenido(contenido);
+						
+						ModeloEmpleados emisorMensaje = new ModeloEmpleados();
+						
+						emisorMensaje.setId(1L);
+						
+						mensajeSignUp.setEmisor(emisorMensaje);
+						
+						mensajeSignUp.setReceptor(empleadoGuardado);
+						
+						serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
+						
+					}
+					else
+					{
+						respuesta.setRespuesta("Error al almacenar.");
+						respuesta.setEmpleados(null);
+						return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+					}
+				}
+				
+			}
+			catch (Exception e)
+			{
+				respuesta.setRespuesta("Error al almacenar: " + e);
+				respuesta.setEmpleados(null);
+				return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
 			}
 			
 		}
-		catch (Exception e)
-		{
-			respuesta.setRespuesta("Error al almacenar: " + e);
-			respuesta.setEmpleados(null);
-			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.INTERNAL_SERVER_ERROR);
-		}
 		
+		else
+		{
+			respuesta.setRespuesta("Empleado sin responsable asignado.");
+			respuesta.setEmpleados(null);
+			return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
+		}
 		
 		
 		return new ResponseEntity<RespuestaEmpleados> (respuesta, HttpStatus.OK);
 	}
-
 
 	
 	}
