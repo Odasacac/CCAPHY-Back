@@ -99,42 +99,34 @@ public class ServiciosEmpleados implements IServiciosEmpleados
 		  			empleadoEncontrado.setUltimaModificacionContrasenya(LocalDateTime.now());
 		  			ModeloEmpleados empleadoActualizado = empleadosDao.save(empleadoEncontrado);
 		  				
-		  			if (empleadoActualizado != null)
-					{
-						respuesta.setRespuesta("Contraseña actualizada.");
-						respuesta.setEmpleados(null);
+		  			
+					respuesta.setRespuesta("Contraseña actualizada.");
+					respuesta.setEmpleados(null);
 							
-						ModeloMensajes mensajeSignUp = new ModeloMensajes();
-						mensajeSignUp.setAsunto("Cambio de contraseña");
+					ModeloMensajes mensajeSignUp = new ModeloMensajes();
+					mensajeSignUp.setAsunto("Cambio de contraseña");
 							
-						DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'a las' HH:mm:ss");
-						String fechaHoraFormateada = LocalDateTime.now().format(formatter);
+					DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy 'a las' HH:mm:ss");
+					String fechaHoraFormateada = LocalDateTime.now().format(formatter);
 							
-						String contenido = "Hola, " + empleadoActualizado.getNombre()
+					String contenido = "Hola, " + empleadoActualizado.getNombre()
 											+ "\n\nLe informamos que su contraseña ha sido actualizada el día "
 											+ fechaHoraFormateada + "."
 											+ "\n\nPara cualquier duda puede escribir a este correo."
 											+ "\n\nGracias.";
 										
 							
-						mensajeSignUp.setContenido(contenido);
+					mensajeSignUp.setContenido(contenido);
+						
+					ModeloEmpleados emisorMensaje = new ModeloEmpleados();
 							
-						ModeloEmpleados emisorMensaje = new ModeloEmpleados();
+					emisorMensaje.setId(1L);
 							
-						emisorMensaje.setId(1L);
+					mensajeSignUp.setEmisor(emisorMensaje);
 							
-						mensajeSignUp.setEmisor(emisorMensaje);
+					mensajeSignUp.setReceptor(empleadoActualizado);
 							
-						mensajeSignUp.setReceptor(empleadoActualizado);
-							
-						serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);
-					}
-					else
-					{
-						respuesta.setRespuesta("Error al actualizar.");
-						respuesta.setEmpleados(null);
-						return new ResponseEntity<RespuestaEmpleados>(respuesta, HttpStatus.BAD_REQUEST);
-					}
+					serviciosMensajes.guardarNuevoMensaje(mensajeSignUp);				
 				}
 				else
 				{

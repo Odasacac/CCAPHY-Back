@@ -24,6 +24,8 @@ public class FuncionesUtiles implements IFuncionesUtiles
 	@Autowired
 	private IEmpleadosDao empleadosDao;
 	
+	private Random random = new Random();
+	
 
 	@Value("${jwt.secret-key}")
 	private String secretKey;
@@ -31,7 +33,6 @@ public class FuncionesUtiles implements IFuncionesUtiles
 	public String generateCorreo(ModeloEmpleados empleado) 
 	{
 	    String correo;
-	    Random random = new Random();
 	    String caracteres = "1234567890";
 
 	    try 
@@ -198,7 +199,6 @@ public class FuncionesUtiles implements IFuncionesUtiles
 		 catch (Exception e)
 		 {
 			 System.out.println("Error: " + e);
-			 Random random = new Random();
 			 StringBuilder  codigoGeneradoAleatoriamente = new StringBuilder();
 		     String caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 

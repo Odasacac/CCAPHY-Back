@@ -7,6 +7,7 @@ public enum EnumEspecialidades
 	GERIATRICA,
 	PEDIATRICA,
 	PELVIPERINEAL,
+	DEPORTIVA,
 	RESPIRATORIA;
 	
 }
