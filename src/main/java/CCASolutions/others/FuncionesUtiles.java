@@ -1,6 +1,9 @@
 package CCASolutions.others;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -13,7 +16,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import CCASolutions.dao.IEmpleadosDao;
+import CCASolutions.dao.IPacientesDao;
 import CCASolutions.modelos.ModeloEmpleados;
+import CCASolutions.modelos.ModeloPacientes;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -23,6 +28,9 @@ public class FuncionesUtiles implements IFuncionesUtiles
 {
 	@Autowired
 	private IEmpleadosDao empleadosDao;
+	
+	@Autowired
+	private IPacientesDao pacientesDao;
 	
 	private Random random = new Random();
 	
@@ -105,6 +113,29 @@ public class FuncionesUtiles implements IFuncionesUtiles
 	    }
 
 	    return empleadoExiste;
+	}
+	
+	public boolean comprobarPacienteExistePorNombreCompleto(ModeloPacientes paciente) 
+	{
+	    boolean pacienteExiste = false;
+
+	    try 
+	    {
+
+	        if (paciente.getNombre() == null || paciente.getPrimerApellido() == null || paciente.getSegundoApellido() == null) 
+	        {
+	            return false;
+	        }
+
+
+	        pacienteExiste = pacientesDao.existsByNombreAndPrimerApellidoAndSegundoApellido(paciente.getNombre(), paciente.getPrimerApellido(), paciente.getSegundoApellido());
+	    } 
+	    catch (Exception e) 
+	    {
+	        System.out.println("Error: " + e);
+	    }
+
+	    return pacienteExiste;
 	}
 	
 	
@@ -213,6 +244,22 @@ public class FuncionesUtiles implements IFuncionesUtiles
 			 return codigoGeneradoAleatoriamente.toString();
 		 }
 		 }
+
+
+	@Override
+	public Long obtenerEdadPorFechaNacimiento(String fechaNacimiento) 
+	{
+	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+	    LocalDate fechaNacimientoLocalDate = LocalDate.parse(fechaNacimiento, formatter);
+
+	    LocalDate fechaActual = LocalDate.now();
+
+	    long edad = Period.between(fechaNacimientoLocalDate, fechaActual).getYears();
+
+	    return edad;
+	}
+
 
 
 }

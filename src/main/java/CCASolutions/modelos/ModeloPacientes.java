@@ -1,7 +1,7 @@
 package CCASolutions.modelos;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import CCASolutions.enums.EnumEstados;
@@ -37,8 +37,8 @@ public class ModeloPacientes implements Serializable
 	private String correo;
 	private String telefonoContacto;
 	private String direccion;
-	private Date fechaNacimiento;
-	private String edad;
+	private String fechaNacimiento;
+	private Long edad;
 	
 	@Enumerated(EnumType.STRING)
 	private EnumEstados estado;
@@ -46,8 +46,8 @@ public class ModeloPacientes implements Serializable
 	@Enumerated(EnumType.STRING)
 	private EnumSexo sexo;
 	
-	private Date fechaAlta;
-	private Date fechaBaja;
+	private LocalDateTime fechaAlta;
+	private LocalDateTime fechaBaja;
 	
 	private String motivoConsulta;
 	

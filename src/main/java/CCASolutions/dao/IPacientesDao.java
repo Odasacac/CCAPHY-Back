@@ -7,4 +7,6 @@ import CCASolutions.modelos.ModeloPacientes;
 public interface IPacientesDao extends CrudRepository<ModeloPacientes, Long>
 {
 	boolean existsByResponsableId(Long responsableId);
+	
+	 boolean existsByNombreAndPrimerApellidoAndSegundoApellido(String nombre, String primerApellido, String segundoApellido);
 }

@@ -1,6 +1,7 @@
 package CCASolutions.others;
 
 import CCASolutions.modelos.ModeloEmpleados;
+import CCASolutions.modelos.ModeloPacientes;
 
 public interface IFuncionesUtiles
 {
@@ -16,5 +17,9 @@ public interface IFuncionesUtiles
 	
 	public boolean comprobarEmpleadoExistePorNombreCompleto(ModeloEmpleados empleado);
 	
+	public boolean comprobarPacienteExistePorNombreCompleto(ModeloPacientes paciente);
+	
 	public String generateJWT(ModeloEmpleados empleado);
+	
+	public Long obtenerEdadPorFechaNacimiento(String fechaNacimiento);
 }
